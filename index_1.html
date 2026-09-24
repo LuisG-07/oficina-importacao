@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oficina de Importação</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#eceff0; --surface:#fff; --surface2:#f5f7f7; --ink:#12201f; --muted:#59696a;
+  --line:#d2dadb; --line-strong:#b9c4c5; --accent:#0d6e68; --accent-ink:#0d6e68;
+  --accent-soft:#dcecea; --on-accent:#f7fffe; --ok:#1f6b45; --ok-soft:#dcece2; --warn:#8a5a0b;
+  --warn-soft:#f5e9d2; --err:#a02b26; --err-soft:#f6dedc;
+  --radius:10px;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#0e1314; --surface:#161e1f; --surface2:#1d2728; --ink:#e4ebea; --muted:#8fa1a1;
+  --line:#273335; --line-strong:#3a494b; --accent:#4ec9bd; --accent-ink:#6fd9ce;
+  --accent-soft:#16312f; --on-accent:#08201e; --ok:#63c189; --ok-soft:#142a1e;
+  --warn:#d6a24a; --warn-soft:#2e2413; --err:#e2726c; --err-soft:#321a19;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0e1314; --surface:#161e1f; --surface2:#1d2728; --ink:#e4ebea; --muted:#8fa1a1;
+  --line:#273335; --line-strong:#3a494b; --accent:#4ec9bd; --accent-ink:#6fd9ce;
+  --accent-soft:#16312f; --on-accent:#08201e; --ok:#63c189; --ok-soft:#142a1e;
+  --warn:#d6a24a; --warn-soft:#2e2413; --err:#e2726c; --err-soft:#321a19;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+img{max-width:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+.wrap{max-width:1000px;margin:0 auto;padding-inline:16px;padding-block:28px 64px}
+
+header.top{display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;justify-content:space-between;margin-bottom:22px}
+.brand{display:flex;align-items:baseline;gap:10px}
+h1{font-size:25px;font-weight:600;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.brand small{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.lede{color:var(--muted);font-size:14px;max-width:62ch;margin:0}
+
+.tabs{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--line);border-radius:var(--radius);padding:4px;margin:22px 0 18px;width:fit-content;max-width:100%}
+.tabs button{appearance:none;border:0;background:transparent;color:var(--muted);font-family:var(--sans);font-size:14px;font-weight:500;
+  padding:8px 16px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.09)}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.drop{border:1.5px dashed var(--line-strong);border-radius:var(--radius);background:var(--surface);
+  padding:30px 22px;text-align:center;transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop p{margin:0 0 4px}
+.drop .hint{color:var(--muted);font-size:13px}
+.btn{appearance:none;font-family:var(--sans);font-size:14px;font-weight:500;border-radius:8px;
+  padding:9px 16px;cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.45;cursor:default;filter:none}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row.center{justify-content:center}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-top:16px}
+.card h2{font-size:15px;font-weight:600;margin:0 0 12px;letter-spacing:-.01em}
+.card h2 .n{font-family:var(--mono);color:var(--muted);font-weight:400;font-size:13px;margin-left:6px}
+
+.known{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.known li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;font-size:13.5px}
+.known code{font-family:var(--mono);font-size:12.5px;background:var(--surface2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:8px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.stat{background:var(--surface);padding:12px 14px}
+.stat b{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stat span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+
+.finds{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.find{display:grid;grid-template-columns:4px 1fr;gap:12px;background:var(--surface2);border-radius:8px;overflow:hidden}
+.find .stripe{background:var(--muted)}
+.find.ok .stripe{background:var(--ok)} .find.warn .stripe{background:var(--warn)} .find.err .stripe{background:var(--err)}
+.find .body{padding:10px 12px 11px 0}
+.find .t{font-weight:500;font-size:13.5px}
+.find .d{color:var(--muted);font-size:13px;margin-top:2px}
+.find .d code,.find .t code{font-family:var(--mono);font-size:12.5px}
+.tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+  padding:1px 6px;border-radius:4px;margin-right:7px;vertical-align:1px}
+.find.ok .tag{background:var(--ok-soft);color:var(--ok)}
+.find.warn .tag{background:var(--warn-soft);color:var(--warn)}
+.find.err .tag{background:var(--err-soft);color:var(--err)}
+.find.info .tag{background:var(--accent-soft);color:var(--accent-ink)}
+
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
+th{text-align:left;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+  padding:0 12px 7px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 12px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+td.mono,th.mono{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums}
+td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.old{color:var(--muted);text-decoration:line-through}
+.new{color:var(--accent-ink);font-weight:500}
+
+textarea{width:100%;min-height:150px;font-family:var(--mono);font-size:11.5px;line-height:1.5;
+  background:var(--surface2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical}
+.note{font-size:12.5px;color:var(--muted);margin:10px 0 0}
+.note.how{color:var(--ink);background:var(--accent-soft);border-radius:7px;padding:10px 12px;line-height:1.6}
+.note.how .sub{display:block;color:var(--muted);margin-top:4px;font-size:12px}
+.note.alert{color:var(--warn);background:var(--warn-soft);border-radius:7px;padding:9px 11px}
+.filename{font-family:var(--mono);font-size:12.5px;color:var(--muted);word-break:break-all}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));
+  background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13.5px;z-index:9}
+@media (prefers-reduced-motion:no-preference){.toast{animation:pop .18s ease-out}}
+@keyframes pop{from{opacity:0;transform:translate(-50%,6px)}}
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Oficina de Importação</h1>
+      <small>suporte · gestãoclick</small>
+    </div>
+  </header>
+  <p class="lede">Solta o arquivo do cliente aqui antes de subir no sistema. A página diz o que está errado e devolve a
+    versão corrigida. Nada sai do navegador — nenhum arquivo é enviado para servidor.</p>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-ofx" aria-selected="true" aria-controls="p-ofx">Extrato OFX</button>
+    <button role="tab" id="tab-nfe" aria-selected="false" aria-controls="p-nfe">NF-e XML</button>
+  </div>
+
+  <!-- ─────────────── OFX ─────────────── -->
+  <section id="p-ofx" role="tabpanel" aria-labelledby="tab-ofx">
+    <div class="drop" id="drop-ofx">
+      <p><strong>Arraste o .ofx</strong> ou</p>
+      <div class="row center" style="margin-top:10px">
+        <button class="btn primary" id="pick-ofx">Escolher arquivo</button>
+        <button class="btn" id="demo-ofx">Carregar exemplo</button>
+      </div>
+      <p class="hint" style="margin-top:12px">Aceita OFX 1.x (SGML) e 2.x. Os bytes do arquivo são preservados —
+        só os FITID em conflito mudam.</p>
+      <input type="file" id="file-ofx" accept=".ofx,.OFX,text/plain" hidden>
+    </div>
+
+    <div class="card" id="ofx-about">
+      <h2>O que essa aba resolve</h2>
+      <ul class="known">
+        <li><span class="dot"></span><div>O erro <code>Duplicate entry</code> na constraint
+          <code>uq_extrato_referencia</code>, que acontece quando o banco repete ou zera o FITID dos lançamentos.</div></li>
+        <li><span class="dot"></span><div><strong>Santander</strong> — FITID <code>000000</code> e número de comprovante
+          repetido entre lançamentos diferentes.</div></li>
+        <li><span class="dot"></span><div><strong>Caixa</strong> — FITID <code>0</code> e <code>1</code>, e DDHHMM
+          repetido quando dois lançamentos caem no mesmo minuto.</div></li>
+        <li><span class="dot"></span><div><strong>Uniprime</strong> — FITID com texto no lugar do identificador:
+          <code>PAGTO PIX</code>, <code>RECEB PIX</code>, <code>Internet</code>.</div></li>
+      </ul>
+      <p class="note">O FITID novo é um hash de data + valor + histórico + ordem de ocorrência. Reprocessar o mesmo
+        extrato gera exatamente os mesmos identificadores, então reimportar não duplica lançamento. FITID que já veio
+        único é mantido intacto.</p>
+    </div>
+
+    <div id="ofx-out" hidden></div>
+  </section>
+
+  <!-- ─────────────── NF-e ─────────────── -->
+  <section id="p-nfe" role="tabpanel" aria-labelledby="tab-nfe" hidden>
+    <div class="drop" id="drop-nfe">
+      <p><strong>Arraste o .xml</strong> ou</p>
+      <div class="row center" style="margin-top:10px">
+        <button class="btn primary" id="pick-nfe">Escolher arquivo</button>
+        <button class="btn" id="demo-nfe">Carregar exemplo</button>
+      </div>
+      <p class="hint" style="margin-top:12px">nfeProc 4.00, com ou sem os grupos de IBS/CBS da reforma.</p>
+      <input type="file" id="file-nfe" accept=".xml,.XML,text/xml" hidden>
+    </div>
+
+    <div class="card" id="nfe-about">
+      <h2>O que essa aba resolve</h2>
+      <ul class="known">
+        <li><span class="dot"></span><div><strong>Ordem dos elementos.</strong> O schema da NF-e usa
+          <code>xs:sequence</code> — ordem errada derruba a validação mesmo com todo o conteúdo certo. A página
+          reordena <code>infNFe</code>, <code>ide</code>, <code>prod</code>, <code>imposto</code>,
+          <code>ICMSTot</code>, <code>gIBSCBS</code> e os demais grupos.</div></li>
+        <li><span class="dot"></span><div><strong>Atributo virado tag.</strong> <code>nItem</code>, <code>Id</code> e
+          <code>versao</code> voltam a ser atributos, e as duplicatas somem.</div></li>
+        <li><span class="dot"></span><div><strong>Assinatura.</strong> Recalcula o digest do <code>infNFe</code> e
+          compara com o <code>DigestValue</code>. Se bater, o XML é o original da autorização e a página
+          <em>não</em> mexe na estrutura — reordenar quebraria a assinatura.</div></li>
+        <li><span class="dot"></span><div><strong>Regras de negócio.</strong> Confere chave de acesso, totais contra a
+          soma dos itens, destinatário sem documento, <code>qCom × vUnCom</code> e casas decimais que estouram
+          campo numérico.</div></li>
+      </ul>
+    </div>
+
+    <div id="nfe-out" hidden></div>
+  </section>
+
+  <footer>Roda inteiramente no navegador. Arquivo nenhum é enviado para servidor — feche a aba e não sobra nada.</footer>
+</div>
+
+<script>
+/* ══════════ infra ══════════ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+/* SHA-256 e SHA-1 em JS puro: funciona aberto de file://, de http de intranet
+   ou de qualquer lugar, sem depender de crypto.subtle (que exige contexto seguro).
+   Resultado idêntico ao do crypto.subtle — os FITID gerados não mudam. */
+const K256 = new Uint32Array([
+0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+function padMsg(msg) {
+  const l = msg.length, n = ((l + 9 + 63) >> 6) << 6, m = new Uint8Array(n);
+  m.set(msg); m[l] = 0x80;
+  const dv = new DataView(m.buffer), bits = l * 8;
+  dv.setUint32(n - 4, bits >>> 0); dv.setUint32(n - 8, Math.floor(bits / 4294967296));
+  return dv;
+}
+const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+const rotl = (x, n) => (x << n) | (x >>> (32 - n));
+function sha256bytes(msg) {
+  const dv = padMsg(msg), w = new Uint32Array(64);
+  const h = new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+  for (let o = 0; o < dv.byteLength; o += 64) {
+    for (let i = 0; i < 16; i++) w[i] = dv.getUint32(o + i * 4);
+    for (let i = 16; i < 64; i++) {
+      const x = w[i - 15], y = w[i - 2];
+      w[i] = (w[i - 16] + (rotr(x, 7) ^ rotr(x, 18) ^ (x >>> 3)) + w[i - 7] + (rotr(y, 17) ^ rotr(y, 19) ^ (y >>> 10))) >>> 0;
+    }
+    let [A, B, C, D, E, F, G, H] = h;
+    for (let i = 0; i < 64; i++) {
+      const t1 = (H + (rotr(E, 6) ^ rotr(E, 11) ^ rotr(E, 25)) + ((E & F) ^ (~E & G)) + K256[i] + w[i]) >>> 0;
+      const t2 = ((rotr(A, 2) ^ rotr(A, 13) ^ rotr(A, 22)) + ((A & B) ^ (A & C) ^ (B & C))) >>> 0;
+      H = G; G = F; F = E; E = (D + t1) >>> 0; D = C; C = B; B = A; A = (t1 + t2) >>> 0;
+    }
+    [A, B, C, D, E, F, G, H].forEach((v, i) => h[i] = (h[i] + v) >>> 0);
+  }
+  const out = new Uint8Array(32), od = new DataView(out.buffer);
+  h.forEach((v, i) => od.setUint32(i * 4, v)); return out;
+}
+function sha1bytes(msg) {
+  const dv = padMsg(msg), w = new Uint32Array(80);
+  const h = new Uint32Array([0x67452301,0xefcdab89,0x98badcfe,0x10325476,0xc3d2e1f0]);
+  for (let o = 0; o < dv.byteLength; o += 64) {
+    for (let i = 0; i < 16; i++) w[i] = dv.getUint32(o + i * 4);
+    for (let i = 16; i < 80; i++) w[i] = rotl(w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16], 1) >>> 0;
+    let [a, b, c, d, e] = h;
+    for (let i = 0; i < 80; i++) {
+      const f = i < 20 ? ((b & c) | (~b & d)) + 0x5a827999
+              : i < 40 ? (b ^ c ^ d) + 0x6ed9eba1
+              : i < 60 ? ((b & c) | (b & d) | (c & d)) + 0x8f1bbcdc
+              :          (b ^ c ^ d) + 0xca62c1d6;
+      const t = (rotl(a, 5) + f + e + w[i]) >>> 0;
+      e = d; d = c; c = rotl(b, 30) >>> 0; b = a; a = t;
+    }
+    [a, b, c, d, e].forEach((v, i) => h[i] = (h[i] + v) >>> 0);
+  }
+  const out = new Uint8Array(20), od = new DataView(out.buffer);
+  h.forEach((v, i) => od.setUint32(i * 4, v)); return out;
+}
+async function sha256hex(str) {
+  return [...sha256bytes(new TextEncoder().encode(str))].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+async function sha1b64(str) {
+  let s = ''; sha1bytes(new TextEncoder().encode(str)).forEach(x => s += String.fromCharCode(x));
+  return btoa(s);
+}
+const brl = n => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/* ── entrega: download direto, mesma extensão do arquivo importado ── */
+function saveFile(filename, data) {
+  const blob = new Blob([data], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.style.display = 'none';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 2000);
+}
+function wireDelivery(container, filename, payload) {
+  const bytes = () => typeof payload === 'string' ? new TextEncoder().encode(payload) : payload;
+  const text = () => {
+    if (typeof payload === 'string') return payload;
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(payload); }
+    catch (_) { return new TextDecoder('windows-1252').decode(payload); }
+  };
+  const dl = container.querySelector('[data-act="dl"]');
+  if (dl) dl.addEventListener('click', () => { saveFile(filename, bytes()); toast(`Baixado: ${filename}`); });
+  const cp = container.querySelector('[data-act="copy"]');
+  if (cp) cp.addEventListener('click', async () => {
+    const full = text();
+    try { await navigator.clipboard.writeText(full); toast('Conteúdo copiado.'); }
+    catch (_) {
+      const ta = container.querySelector('textarea');
+      if (ta) { ta.value = full; ta.focus(); ta.select(); toast('Selecionado — use Ctrl+C.'); }
+    }
+  });
+}
+const findHTML = f => `<li class="find ${f.k}"><div class="stripe"></div><div class="body">
+  <div class="t"><span class="tag">${f.k === 'err' ? 'erro' : f.k === 'warn' ? 'aviso' : f.k === 'ok' ? 'ok' : 'info'}</span>${f.t}</div>
+  ${f.d ? `<div class="d">${f.d}</div>` : ''}</div></li>`;
+const statHTML = s => `<div class="stat"><b>${s.v}</b><span>${s.l}</span></div>`;
+
+/* ══════════════════ OFX ══════════════════ */
+const BAD_FITID = v => {
+  const t = (v || '').trim();
+  if (!t) return 'vazio';
+  if (/^0+$/.test(t)) return 'zerado';
+  if (!/\d/.test(t)) return 'sem dígito';
+  return null;
+};
+function decodeField(bin) {                       // só para exibir memo com acento
+  try {
+    const bytes = Uint8Array.from(bin, c => c.charCodeAt(0) & 0xff);
+    return new TextDecoder('windows-1252').decode(bytes);
+  } catch (_) { return bin; }
+}
+
+async function processOFX(buf, name) {
+  const bytes = new Uint8Array(buf);
+  let bin = ''; const CH = 8192;                  // latin1 1:1 — round-trip perfeito de bytes
+  for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode(...bytes.subarray(i, i + CH));
+
+  const blocks = [...bin.matchAll(/<STMTTRN>([\s\S]*?)<\/STMTTRN>/gi)];
+  if (!blocks.length) return { error: 'Não achei nenhum bloco <STMTTRN> nesse arquivo. É mesmo um extrato OFX?' };
+
+  const fld = (b, tag) => (b.match(new RegExp('<' + tag + '>([^<\\r\\n]*)', 'i')) || [, ''])[1].trim();
+  const txs = blocks.map((m, i) => ({
+    i, raw: m[0], start: m.index, end: m.index + m[0].length,
+    fitid: fld(m[1], 'FITID'),
+    dt: fld(m[1], 'DTPOSTED').slice(0, 8),
+    amt: fld(m[1], 'TRNAMT'),
+    memo: decodeField(fld(m[1], 'MEMO') || fld(m[1], 'NAME')),
+    type: fld(m[1], 'TRNTYPE')
+  }));
+
+  const seen = new Map();
+  txs.forEach(t => { const k = t.fitid.trim().toUpperCase(); seen.set(k, (seen.get(k) || 0) + 1); });
+
+  const grp = new Map();
+  for (const t of txs) {
+    const reason = BAD_FITID(t.fitid) || (seen.get(t.fitid.trim().toUpperCase()) > 1 ? 'repetido' : null);
+    t.reason = reason;
+    if (!reason) continue;
+    const key = `${t.dt}|${t.amt}|${t.memo}`;
+    const n = (grp.get(key) || 0); grp.set(key, n + 1);
+    t.newFitid = (await sha256hex(`${key}|${n}`)).slice(0, 16).toUpperCase();
+  }
+
+  const changed = txs.filter(t => t.newFitid);
+  let out = '', cur = 0;
+  for (const t of changed) {
+    const fixed = t.raw.replace(/(<FITID>)([^<\r\n]*)/i, (_, a) => a + t.newFitid);
+    out += bin.slice(cur, t.start) + fixed; cur = t.end;
+  }
+  out += bin.slice(cur);
+  const outBytes = Uint8Array.from(out, c => c.charCodeAt(0) & 0xff);
+
+  const by = r => changed.filter(t => t.reason === r).length;
+  const finds = [];
+  if (!changed.length) finds.push({ k: 'ok', t: 'Nenhum FITID em conflito.', d: 'Todos os identificadores estão preenchidos e são únicos. Esse arquivo deve importar sem o erro de chave duplicada.' });
+  for (const [r, txt] of [['repetido', 'FITID repetido entre lançamentos diferentes'], ['zerado', 'FITID zerado'], ['vazio', 'FITID vazio ou ausente'], ['sem dígito', 'FITID com texto no lugar do identificador']])
+    if (by(r)) finds.push({ k: 'err', t: `${by(r)} ${by(r) === 1 ? 'lançamento com' : 'lançamentos com'} ${txt}`, d: 'Substituído por hash determinístico de data + valor + histórico.' });
+  const dtRange = txs.map(t => t.dt).filter(Boolean).sort();
+  if (dtRange.length) {
+    const f = d => `${d.slice(6, 8)}/${d.slice(4, 6)}/${d.slice(0, 4)}`;
+    finds.push({ k: 'info', t: `Período ${f(dtRange[0])} a ${f(dtRange.at(-1))}`, d: `${txs.length} lançamentos no arquivo.` });
+  }
+
+  return {
+    bytes: outBytes, filename: name.replace(/\.ofx$/i, '') + '-corrigido.ofx', txs, changed, finds,
+    stats: [{ v: txs.length, l: 'lançamentos' }, { v: changed.length, l: 'FITID corrigidos' },
+            { v: txs.length - changed.length, l: 'mantidos' }],
+    preview: new TextDecoder('windows-1252').decode(outBytes).slice(0, 4000)
+  };
+}
+
+function renderOFX(r, box) {
+  if (r.error) { box.hidden = false; box.innerHTML = `<div class="card"><ul class="finds">${findHTML({ k: 'err', t: r.error })}</ul></div>`; return; }
+  const rows = r.changed.slice(0, 250).map(t => `<tr>
+      <td class="mono">${t.dt ? `${t.dt.slice(6, 8)}/${t.dt.slice(4, 6)}/${t.dt.slice(0, 4)}` : '—'}</td>
+      <td class="num">${t.amt ? brl(parseFloat(t.amt)) : '—'}</td>
+      <td>${esc(t.memo || '—')}</td>
+      <td class="mono"><span class="old">${esc(t.fitid || '(vazio)')}</span></td>
+      <td class="mono"><span class="new">${t.newFitid}</span></td></tr>`).join('');
+  box.hidden = false;
+  box.innerHTML = `
+    <div class="card"><h2>Diagnóstico<span class="n">${esc(r.filename.replace('-corrigido', ''))}</span></h2>
+      <div class="stats">${r.stats.map(statHTML).join('')}</div>
+      <ul class="finds" style="margin-top:14px">${r.finds.map(findHTML).join('')}</ul></div>
+    ${r.changed.length ? `<div class="card"><h2>FITID substituídos<span class="n">${r.changed.length}</span></h2>
+      <div class="scroll"><table><thead><tr><th>Data</th><th class="num" style="text-align:right">Valor</th>
+      <th>Histórico</th><th>FITID original</th><th>FITID novo</th></tr></thead><tbody>${rows}</tbody></table></div>
+      ${r.changed.length > 250 ? `<p class="note">Mostrando os 250 primeiros de ${r.changed.length}.</p>` : ''}</div>` : ''}
+    <div class="card"><h2>Arquivo corrigido</h2>
+      <div class="row"><button class="btn primary" data-act="dl">Baixar .ofx</button>
+        <button class="btn" data-act="copy">Copiar conteúdo</button>
+        <span class="filename">${esc(r.filename)}</span></div>
+      <p class="note">Fora os FITID trocados, os bytes são idênticos ao arquivo do banco — mesmo encoding, mesmo
+        cabeçalho, mesmos acentos.</p>
+      <textarea readonly spellcheck="false" style="margin-top:12px">${esc(r.preview)}${r.preview.length >= 4000 ? '\n…' : ''}</textarea></div>`;
+  wireDelivery(box, r.filename, r.bytes);
+}
+
+/* ══════════════════ NF-e ══════════════════ */
+const NS = 'http://www.portalfiscal.inf.br/nfe';
+const ORDER = {
+  nfeProc:['NFe','protNFe'], NFe:['infNFe','infNFeSupl','Signature'],
+  infNFe:['ide','emit','avulsa','dest','retirada','entrega','autXML','det','total','transp','cobr','pag','infIntermed','infAdic','exporta','compra','cana','infSolicNFF','infRespTec','agropecuario'],
+  ide:['cUF','cNF','natOp','mod','serie','nNF','dhEmi','dhSaiEnt','tpNF','idDest','cMunFG','tpImp','tpEmis','cDV','tpAmb','finNFe','indFinal','indPres','indIntermed','procEmi','verProc','dhCont','xJust','NFref','gCompraGov'],
+  emit:['CNPJ','CPF','xNome','xFant','enderEmit','IE','IEST','IM','CNAE','CRT'],
+  enderEmit:['xLgr','nro','xCpl','xBairro','cMun','xMun','UF','CEP','cPais','xPais','fone'],
+  dest:['CNPJ','CPF','idEstrangeiro','xNome','enderDest','indIEDest','IE','ISUF','IM','email'],
+  enderDest:['xLgr','nro','xCpl','xBairro','cMun','xMun','UF','CEP','cPais','xPais','fone'],
+  autXML:['CNPJ','CPF'], det:['prod','imposto','impostoDevol','infAdProd','vItem','DFeReferenciado','obsItem'],
+  prod:['cProd','cEAN','xProd','NCM','NVE','CEST','indEscala','CNPJFab','cBenef','gCred','EXTIPI','CFOP','uCom','qCom','vUnCom','vProd','cEANTrib','uTrib','qTrib','vUnTrib','vFrete','vSeg','vDesc','vOutro','indTot','DI','detExport','xPed','nItemPed','nFCI','rastro','infProdNFF','infProdEmb','veicProd','med','arma','comb','nRECOPI'],
+  DI:['nDI','dDI','xLocDesemb','UFDesemb','dDesemb','tpViaTransp','vAFRMM','tpIntermedio','CNPJ','CPF','UFTerceiro','cExportador','adi'],
+  adi:['nAdicao','nSeqAdic','cFabricante','vDescDI','nDraw'],
+  imposto:['vTotTrib','ICMS','IPI','II','ISSQN','PIS','PISST','COFINS','COFINSST','ICMSUFDest','IS','IBSCBS'],
+  ICMS:['ICMS00','ICMS02','ICMS10','ICMS15','ICMS20','ICMS30','ICMS40','ICMS51','ICMS53','ICMS60','ICMS61','ICMS70','ICMS90','ICMSPart','ICMSST','ICMSSN101','ICMSSN102','ICMSSN201','ICMSSN202','ICMSSN500','ICMSSN900'],
+  _icms:['orig','CST','CSOSN','modBC','pRedBC','vBC','pICMS','vICMS','vBCFCP','pFCP','vFCP','modBCST','pMVAST','pRedBCST','vBCST','pICMSST','vICMSST','vBCFCPST','pFCPST','vFCPST','vICMSDeson','motDesICMS','vBCSTRet','pST','vICMSSubstituto','vICMSSTRet','vBCFCPSTRet','pFCPSTRet','vFCPSTRet','pRedBCEfet','vBCEfet','pICMSEfet','vICMSEfet','pCredSN','vCredICMSSN'],
+  IPI:['CNPJProd','cSelo','qSelo','cEnq','IPITrib','IPINT'], IPITrib:['CST','vBC','pIPI','qUnid','vUnid','vIPI'],
+  II:['vBC','vDespAdu','vII','vIOF'],
+  PIS:['PISAliq','PISQtde','PISNT','PISOutr'], COFINS:['COFINSAliq','COFINSQtde','COFINSNT','COFINSOutr'],
+  _pis:['CST','vBC','pPIS','vPIS','qBCProd','vAliqProd'], _cofins:['CST','vBC','pCOFINS','vCOFINS','qBCProd','vAliqProd'],
+  IBSCBS:['CST','cClassTrib','gIBSCBS','gIBSCBSMono','gTransfCred','gCredPresIBSZFM','gIBSCredPres','gCBSCredPres'],
+  gIBSCBS:['vBC','gIBSUF','gIBSMun','vIBS','gCBS','gTribRegular','gIBSCredPres','gCBSCredPres','gTribCompraGov'],
+  _gibsuf:['pIBSUF','gDif','gDevTrib','gRed','vIBSUF'], _gibsmun:['pIBSMun','gDif','gDevTrib','gRed','vIBSMun'],
+  gCBS:['pCBS','gDif','gDevTrib','gRed','vCBS'],
+  total:['ICMSTot','ISSQNtot','retTrib','ISTot','IBSCBSTot','vNFTot'],
+  ICMSTot:['vBC','vICMS','vICMSDeson','vFCPUFDest','vICMSUFDest','vICMSUFRemet','vFCP','vBCST','vST','vFCPST','vFCPSTRet','qBCMono','vICMSMono','qBCMonoReten','vICMSMonoReten','qBCMonoRet','vICMSMonoRet','vProd','vFrete','vSeg','vDesc','vII','vIPI','vIPIDevol','vPIS','vCOFINS','vOutro','vNF','vTotTrib'],
+  IBSCBSTot:['vBCIBSCBS','gIBS','gCBS','gMono'], gIBS:['gIBSUF','gIBSMun','vIBS','vCredPres','vCredPresCondSus'],
+  _gibsuftot:['vDif','vDevTrib','vIBSUF'], _gibsmuntot:['vDif','vDevTrib','vIBSMun'],
+  _gcbstot:['vDif','vDevTrib','vCBS','vCredPres','vCredPresCondSus'],
+  transp:['modFrete','transporta','retTransp','veicTransp','reboque','vagao','balsa','vol'],
+  transporta:['CNPJ','CPF','xNome','IE','xEnder','xMun','UF'], vol:['qVol','esp','marca','nVol','pesoL','pesoB','lacres'],
+  cobr:['fat','dup'], fat:['nFat','vOrig','vDesc','vLiq'], dup:['nDup','dVenc','vDup'],
+  pag:['detPag','vTroco'], detPag:['indPag','tPag','xPag','vPag','dPag','CNPJPag','UFPag','CNPJReceb','idAssinatura','card'],
+  infAdic:['infAdFisco','infCpl','obsCont','obsFisco','procRef'], compra:['xNEmp','xPed','xCont'],
+  infRespTec:['CNPJ','xContato','email','fone','idCSRT','hashCSRT'],
+  protNFe:['infProt','Signature'], infProt:['tpAmb','verAplic','chNFe','dhRecbto','nProt','digVal','cStat','xMotivo']
+};
+const ICMS_KIDS = new Set(ORDER.ICMS);
+function seqFor(el, parent) {
+  const n = el.localName;
+  if (ICMS_KIDS.has(n)) return ORDER._icms;
+  if (parent === 'PIS') return ORDER._pis;
+  if (parent === 'COFINS') return ORDER._cofins;
+  if (parent === 'IBSCBSTot' && n === 'gCBS') return ORDER._gcbstot;
+  if (parent === 'gIBS') return n === 'gIBSUF' ? ORDER._gibsuftot : n === 'gIBSMun' ? ORDER._gibsmuntot : null;
+  if (parent === 'gIBSCBS') { if (n === 'gIBSUF') return ORDER._gibsuf; if (n === 'gIBSMun') return ORDER._gibsmun; }
+  return ORDER[n] || null;
+}
+function reorder(el, parent, moved) {
+  const kids = [...el.children];
+  kids.forEach(k => reorder(k, el.localName, moved));
+  const seq = seqFor(el, parent);
+  if (!seq) return;
+  const before = kids.map(k => k.localName).join(',');
+  const idx = new Map(seq.map((t, i) => [t, i]));
+  const sorted = kids.map((k, i) => [k, i]).sort((a, b) =>
+    (idx.has(a[0].localName) ? idx.get(a[0].localName) : 999) - (idx.has(b[0].localName) ? idx.get(b[0].localName) : 999)
+    || a[1] - b[1]).map(p => p[0]);
+  if (sorted.map(k => k.localName).join(',') !== before) {
+    moved.push(el.localName);
+    sorted.forEach(k => el.appendChild(k));
+  }
+}
+const txt = (el, t) => { const c = el && [...el.children].find(x => x.localName === t); return c ? (c.textContent || '').trim() : null; };
+const num = (el, t) => { const v = txt(el, t); return v == null ? null : parseFloat(v); };
+const kid = (el, t) => el && [...el.children].find(x => x.localName === t);
+
+function chaveDV(ch) {
+  const w = [2, 3, 4, 5, 6, 7, 8, 9]; let s = 0;
+  [...ch.slice(0, 43)].reverse().forEach((c, i) => s += (+c) * w[i % 8]);
+  const d = 11 - (s % 11); return d >= 10 ? 0 : d;
+}
+function canonInfNFe(raw) {
+  const i = raw.indexOf('<infNFe '), j = raw.indexOf('</infNFe>');
+  if (i < 0 || j < 0) return null;
+  return raw.slice(i, j + 9)
+    .replace('<infNFe ', `<infNFe xmlns="${NS}" `)
+    .replace(/<([A-Za-z0-9_:.\-]+)((?:\s[^<>]*?)?)\s*\/>/g, (_, tag, attrs) => `<${tag}${attrs.replace(/\s+$/, '')}></${tag}>`);
+}
+
+async function processNFe(raw, name) {
+  const f = [];
+  const hadProlog = /^\s*<\?xml/.test(raw);
+  raw = raw.replace(/^﻿/, '');
+  const doc = new DOMParser().parseFromString(raw, 'application/xml');
+  if (doc.querySelector('parsererror')) return { error: 'XML malformado — o navegador não conseguiu nem abrir o arquivo. Provavelmente truncado ou com caractere inválido.' };
+  const root = doc.documentElement;
+  if (!['nfeProc', 'NFe'].includes(root.localName)) return { error: `Raiz <code>&lt;${esc(root.localName)}&gt;</code> não é uma NF-e. Esperava <code>nfeProc</code> ou <code>NFe</code>.` };
+
+  const inf = doc.getElementsByTagNameNS(NS, 'infNFe')[0] || doc.getElementsByTagName('infNFe')[0];
+  if (!inf) return { error: 'Não achei o elemento <code>infNFe</code>.' };
+
+  /* ── assinatura ── */
+  const sig = [...(kid(root, 'NFe') || root).children].find(c => c.localName === 'Signature');
+  const declared = sig && sig.getElementsByTagName('DigestValue')[0]?.textContent.trim();
+  let sigState = 'none';
+  if (declared) {
+    const c = canonInfNFe(raw);
+    const calc = c ? await sha1b64(c) : null;
+    sigState = calc === declared ? 'valid' : 'broken';
+    if (sigState === 'valid') f.push({ k: 'ok', t: 'Assinatura digital íntegra', d: `O digest recalculado do <code>infNFe</code> bate com o <code>DigestValue</code> (<code>${esc(declared)}</code>). Esse é o XML original da autorização, sem alteração.` });
+    else f.push({ k: 'err', t: 'Assinatura não confere', d: `Declarado <code>${esc(declared)}</code>, recalculado <code>${esc(calc || '—')}</code>. O conteúdo mudou depois que a SEFAZ autorizou — reindentação, reprocessamento ou edição manual. O único caminho seguro é pedir o XML original ao emitente.` });
+  } else {
+    f.push({ k: 'err', t: 'Sem assinatura digital', d: 'Falta a tag <code>&lt;Signature&gt;</code> dentro de <code>&lt;NFe&gt;</code>. Ela não pode ser reconstruída aqui. Se o seu validador confere assinatura, só o XML original resolve.' });
+  }
+
+  /* ── estrutura ── */
+  let fixedXml = null, moved = [], structNotes = [];
+  if (sigState !== 'valid') {
+    const clone = doc.cloneNode(true), cr = clone.documentElement;
+    const rm = (el, t) => { const c = kid(el, t); if (c) { el.removeChild(c); return (c.textContent || '').trim(); } return null; };
+    if (cr.localName === 'nfeProc') { if (rm(cr, 'versao')) structNotes.push('<code>&lt;versao&gt;</code> solto no fim do <code>nfeProc</code> removido'); cr.setAttribute('versao', '4.00'); }
+    for (const nf of [...clone.getElementsByTagNameNS(NS, 'infNFe')]) {
+      if (rm(nf, 'Id')) structNotes.push('<code>&lt;Id&gt;</code> duplicado dentro do <code>infNFe</code> removido');
+      if (!nf.getAttribute('versao')) { nf.setAttribute('versao', '4.00'); structNotes.push('atributo <code>versao="4.00"</code> adicionado no <code>infNFe</code>'); }
+      for (const d of [...nf.children].filter(c => c.localName === 'det')) {
+        const n = rm(d, 'nItem');
+        if (n) { d.setAttribute('nItem', n); structNotes.push(`<code>nItem</code> do item ${esc(n).slice(0, 8)} convertido de tag para atributo`); }
+        const p = kid(d, 'prod');
+        for (const t of ['cEAN', 'cEANTrib']) {
+          const c = p && kid(p, t);
+          if (c && !(c.textContent || '').trim()) { c.textContent = 'SEM GTIN'; structNotes.push(`<code>${t}</code> vazio preenchido com <code>SEM GTIN</code>`); }
+        }
+      }
+    }
+    for (const pn of [...clone.getElementsByTagNameNS(NS, 'protNFe')]) {
+      if (!pn.getAttribute('versao')) pn.setAttribute('versao', '4.00');
+      const ip = kid(pn, 'infProt'); if (!ip) continue;
+      const oldId = rm(ip, 'Id'), np = txt(ip, 'nProt');
+      if (oldId || !ip.getAttribute('Id')) { ip.setAttribute('Id', oldId || ('ID' + (np || ''))); if (oldId) structNotes.push('<code>Id</code> do <code>infProt</code> convertido de tag para atributo'); }
+      if (!kid(ip, 'tpAmb')) {
+        const amb = txt(clone.getElementsByTagNameNS(NS, 'ide')[0], 'tpAmb') || '1';
+        const e = clone.createElementNS(NS, 'tpAmb'); e.textContent = amb; ip.appendChild(e);
+        structNotes.push(`<code>tpAmb</code> ausente no <code>infProt</code>, preenchido com <code>${esc(amb).slice(0, 4)}</code> copiado do <code>ide</code>`);
+      }
+      if (!kid(ip, 'verAplic')) {
+        const e = clone.createElementNS(NS, 'verAplic'); e.textContent = 'SEFAZ-v4_0'; ip.appendChild(e);
+        structNotes.push('<code>verAplic</code> ausente no <code>infProt</code>, preenchido com o valor de marcação <code>SEFAZ-v4_0</code>');
+      }
+    }
+    reorder(cr, null, moved);
+    fixedXml = '<?xml version="1.0" encoding="UTF-8"?>' +
+      new XMLSerializer().serializeToString(clone).replace(/>\s+</g, '><').trim();
+    if (moved.length) {
+      const u = [...new Set(moved)];
+      f.push({ k: 'err', t: `Ordem dos elementos errada em ${u.length} ${u.length === 1 ? 'grupo' : 'grupos'}`, d: `O schema usa <code>xs:sequence</code>, então ordem conta. Reordenado: ${u.map(x => `<code>${x}</code>`).join(', ')}.` });
+    }
+    if (structNotes.length) f.push({ k: 'warn', t: 'Correções de estrutura aplicadas', d: [...new Set(structNotes)].join(' · ') });
+    if (!moved.length && !structNotes.length) f.push({ k: 'ok', t: 'Estrutura na ordem do schema', d: 'Nenhum elemento fora de sequência.' });
+  } else {
+    f.push({ k: 'info', t: 'Estrutura preservada de propósito', d: 'Como a assinatura está válida, reordenar qualquer elemento quebraria o digest. A página não tocou na estrutura.' });
+    if (!hadProlog) fixedXml = '<?xml version="1.0" encoding="UTF-8"?>' + raw.replace(/^\s+/, '');
+  }
+  if (!hadProlog) f.push({ k: 'warn', t: 'Falta a declaração <code>&lt;?xml … ?&gt;</code>', d: 'Sem ela, parser que assume ISO-8859-1 estoura no primeiro acento do arquivo. Adicionada na versão corrigida — fica fora da região assinada, então não afeta o digest.' });
+
+  /* ── regras de negócio ── */
+  const ide = kid(inf, 'ide'), emit = kid(inf, 'emit'), dest = kid(inf, 'dest');
+  const tot = kid(kid(inf, 'total'), 'ICMSTot');
+  const dets = [...inf.children].filter(c => c.localName === 'det');
+  const chave = (inf.getAttribute('Id') || '').replace(/^NFe/, '');
+  if (/^\d{44}$/.test(chave)) {
+    const dv = chaveDV(chave);
+    if (String(dv) !== chave[43]) f.push({ k: 'err', t: 'Dígito verificador da chave de acesso inválido', d: `Calculado <code>${dv}</code>, informado <code>${chave[43]}</code>.` });
+    const cnpjE = txt(emit, 'CNPJ');
+    if (cnpjE && chave.slice(6, 20) !== cnpjE) f.push({ k: 'err', t: 'CNPJ da chave não bate com o do emitente', d: `Chave: <code>${chave.slice(6, 20)}</code> · <code>emit</code>: <code>${esc(cnpjE)}</code>.` });
+  } else if (chave) f.push({ k: 'err', t: 'Chave de acesso não tem 44 dígitos', d: `<code>${esc(chave)}</code>` });
+
+  if (dest && !txt(dest, 'CNPJ') && !txt(dest, 'CPF') && !(txt(dest, 'idEstrangeiro') || '').trim())
+    f.push({ k: 'err', t: 'Destinatário sem nenhum documento', d: 'Sem <code>CNPJ</code>, <code>CPF</code> e com <code>idEstrangeiro</code> vazio. Importador que usa o documento como chave do cadastro de parceiro quebra aqui — é a causa mais comum de falha em nota de importação e exportação.' });
+
+  if (tot) {
+    const g = t => num(tot, t) ?? 0;
+    const somaProd = dets.reduce((a, d) => a + (num(kid(d, 'prod'), 'vProd') || 0), 0);
+    if (Math.abs(somaProd - g('vProd')) > 0.02)
+      f.push({ k: 'err', t: 'Total de produtos não bate com a soma dos itens', d: `Soma dos itens R$ ${brl(somaProd)} · <code>vProd</code> R$ ${brl(g('vProd'))}.` });
+    const w16 = g('vProd') - g('vDesc') - g('vICMSDeson') + g('vST') + g('vFCPST') + g('vFrete') + g('vSeg') + g('vOutro') + g('vII') + g('vIPI') + g('vIPIDevol');
+    if (Math.abs(w16 - g('vNF')) > 0.02)
+      f.push({ k: 'err', t: 'Total da nota não fecha pela regra W16', d: `<code>vProd + vOutro + vII + vIPI + vST + vFrete + vSeg − vDesc</code> = R$ ${brl(w16)}, mas <code>vNF</code> traz R$ ${brl(g('vNF'))}. Diferença de R$ ${brl(Math.abs(g('vNF') - w16))}. Importador que recalcula o total rejeita aqui.` });
+  }
+
+  const decOver = [], qtyOff = [], unitOdd = [], noGtin = [];
+  dets.forEach(d => {
+    const p = kid(d, 'prod'), n = esc(d.getAttribute('nItem') || txt(d, 'nItem') || '?').slice(0, 8);
+    if (!p) return;
+    const vu = txt(p, 'vUnCom') || '', q = num(p, 'qCom'), vp = num(p, 'vProd');
+    const dec = (vu.split('.')[1] || '').length;
+    if (dec > 6) decOver.push(`${n} (${dec})`);
+    if (q != null && vp != null && Math.abs(q * parseFloat(vu) - vp) > 0.02) qtyOff.push(n);
+    if (txt(p, 'uCom') !== txt(p, 'uTrib') && num(p, 'qCom') !== num(p, 'qTrib')) unitOdd.push(n);
+    if (!(txt(p, 'cEAN') || '').trim()) noGtin.push(n);
+  });
+  if (decOver.length) f.push({ k: 'warn', t: `<code>vUnCom</code> com mais de 6 casas decimais nos itens ${decOver.join(', ')}`, d: 'O schema aceita até 10, mas campo numérico definido como DECIMAL(15,4) ou (15,6) estoura ou arredonda na gravação.' });
+  if (qtyOff.length) f.push({ k: 'warn', t: `<code>qCom × vUnCom ≠ vProd</code> nos itens ${qtyOff.join(', ')}`, d: 'Diferença acima de um centavo.' });
+  if (unitOdd.length) f.push({ k: 'warn', t: `Unidade comercial diferente da tributável nos itens ${unitOdd.join(', ')}`, d: 'Com quantidades também diferentes. Sistema que assume <code>qCom = qTrib</code> grava estoque errado.' });
+  if (noGtin.length && sigState === 'valid') f.push({ k: 'warn', t: `<code>cEAN</code> vazio nos itens ${noGtin.join(', ')}`, d: 'Na 4.00 o correto é o literal <code>SEM GTIN</code>. Não corrigido porque quebraria a assinatura.' });
+
+  const tpNF = txt(ide, 'tpNF');
+  if (tpNF === '0') f.push({ k: 'info', t: 'Nota de entrada', d: `<code>tpNF = 0</code>, natureza “${esc(txt(ide, 'natOp') || '')}”. Emitida pela própria empresa — não é nota de fornecedor. Costuma exigir rotina de importação diferente do XML de compra.` });
+
+  const ord = { err: 0, warn: 1, info: 2, ok: 3 };
+  f.sort((a, b) => ord[a.k] - ord[b.k]);
+  const nErr = f.filter(x => x.k === 'err').length, nWarn = f.filter(x => x.k === 'warn').length;
+
+  return {
+    xml: fixedXml, filename: name.replace(/\.xml$/i, '') + '-corrigido.xml', finds: f, sigState,
+    stats: [{ v: dets.length, l: 'itens' }, { v: nErr, l: nErr === 1 ? 'erro' : 'erros' },
+            { v: nWarn, l: nWarn === 1 ? 'aviso' : 'avisos' },
+            { v: txt(kid(kid(root, 'protNFe'), 'infProt'), 'cStat') || '—', l: 'cStat' }],
+    head: { chave, emit: txt(emit, 'xNome'), nNF: txt(ide, 'nNF'), serie: txt(ide, 'serie'), vNF: tot ? num(tot, 'vNF') : null }
+  };
+}
+
+function renderNFe(r, box) {
+  box.hidden = false;
+  if (r.error) { box.innerHTML = `<div class="card"><ul class="finds">${findHTML({ k: 'err', t: r.error })}</ul></div>`; return; }
+  const h = r.head;
+  box.innerHTML = `
+    <div class="card"><h2>Diagnóstico<span class="n">${esc(h.emit || '')}${h.nNF ? ` · nº ${esc(h.nNF)}/${esc(h.serie || '')}` : ''}</span></h2>
+      <div class="stats">${r.stats.map(statHTML).join('')}</div>
+      ${h.chave ? `<p class="note" style="margin-top:12px">Chave <span class="filename">${esc(h.chave)}</span>${h.vNF != null ? ` · total R$ ${brl(h.vNF)}` : ''}</p>` : ''}
+      <ul class="finds" style="margin-top:14px">${r.finds.map(findHTML).join('')}</ul></div>
+    ${r.xml ? `<div class="card"><h2>Arquivo corrigido</h2>
+      <div class="row"><button class="btn primary" data-act="dl">Baixar .xml</button>
+        <button class="btn" data-act="copy">Copiar conteúdo</button>
+        <span class="filename">${esc(r.filename)}</span></div>
+      <p class="note">${r.sigState === 'valid'
+        ? 'Só a declaração <code>&lt;?xml?&gt;</code> foi adicionada. Estrutura e assinatura intactas.'
+        : 'Estrutura reordenada conforme o <code>procNFe_v4.00.xsd</code>. A assinatura digital não vai junto — se o seu validador confere assinatura, esse arquivo não passa e você precisa do XML original do emitente.'}</p>
+      <textarea readonly spellcheck="false" style="margin-top:12px">${esc(r.xml.slice(0, 4000))}${r.xml.length > 4000 ? '\n…' : ''}</textarea></div>`
+      : `<div class="card"><h2>Nada a corrigir</h2><p class="note" style="margin-top:0">O arquivo já está na ordem do schema e com a declaração XML. Os apontamentos acima são de conteúdo e precisam ser resolvidos com quem emitiu a nota.</p></div>`}`;
+  if (r.xml) wireDelivery(box, r.filename, r.xml);
+}
+
+/* ══════════ ligação com a interface ══════════ */
+function wireTab(kind, { drop, pick, file, demo, out, about, run, render, sample, sampleName }) {
+  const d = $(drop), inp = $(file), o = $(out);
+  const busy = n => { o.hidden = false; o.innerHTML = `<div class="card"><p class="note" style="margin:0">Analisando ${esc(n)}…</p></div>`; };
+  const go = async (payload, name) => {
+    busy(name);
+    try { render(await run(payload, name), o); }
+    catch (e) { o.innerHTML = `<div class="card"><ul class="finds">${findHTML({ k: 'err', t: 'Falha ao processar', d: esc(e.message || String(e)) })}</ul></div>`; }
+    $(about).hidden = true;
+  };
+  const fromFile = async fl => {
+    if (!fl) return;
+    const buf = await fl.arrayBuffer();
+    go(kind === 'ofx' ? buf : new TextDecoder('utf-8').decode(buf), fl.name);
+  };
+  $(pick).addEventListener('click', () => inp.click());
+  inp.addEventListener('change', e => fromFile(e.target.files[0]));
+  $(demo).addEventListener('click', () => go(kind === 'ofx' ? new TextEncoder().encode(sample).buffer : sample, sampleName));
+  ['dragenter', 'dragover'].forEach(ev => d.addEventListener(ev, e => { e.preventDefault(); d.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => d.addEventListener(ev, e => { e.preventDefault(); d.classList.remove('over'); }));
+  d.addEventListener('drop', e => fromFile(e.dataTransfer.files[0]));
+}
+
+const SAMPLE_OFX = `OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+CHARSET:1252
+
+<OFX><BANKMSGSRSV1><STMTTRNRS><STMTRS><CURDEF>BRL
+<BANKTRANLIST>
+<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260902<TRNAMT>-1250.00<FITID>000000<MEMO>PAGTO FORNECEDOR</STMTTRN>
+<STMTTRN><TRNTYPE>CREDIT<DTPOSTED>20260902<TRNAMT>3400.50<FITID>000000<MEMO>RECEB PIX</STMTTRN>
+<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260903<TRNAMT>-89.90<FITID>202609031422<MEMO>TARIFA PACOTE</STMTTRN>
+<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260903<TRNAMT>-410.00<FITID>202609031422<MEMO>PAGTO BOLETO</STMTTRN>
+<STMTTRN><TRNTYPE>CREDIT<DTPOSTED>20260904<TRNAMT>150.00<FITID>PAGTO PIX<MEMO>RECEB PIX CLIENTE</STMTTRN>
+<STMTTRN><TRNTYPE>CREDIT<DTPOSTED>20260904<TRNAMT>980.00<FITID>88213377401<MEMO>TED RECEBIDA</STMTTRN>
+</BANKTRANLIST></STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>`;
+
+const SAMPLE_NFE = `<?xml version="1.0" encoding="utf-8"?>
+<nfeProc versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe"><protNFe><infProt><nProt>131260000001234</nProt><digVal>AAAAAAAAAAAAAAAAAAAAAAAAAAA=</digVal><dhRecbto>2026-09-05T10:53:51-03:00</dhRecbto><Id>ID131260000001234</Id><chNFe>31260911222333000181550010000012341123456788</chNFe><xMotivo>Autorizado o uso da NF-e</xMotivo><cStat>100</cStat></infProt></protNFe><NFe><infNFe Id="NFe31260911222333000181550010000012341123456788"><infAdic><infCpl>NOTA DE EXEMPLO - DADOS FICTICIOS</infCpl></infAdic><det><nItem>1</nItem><prod><cEAN/><cProd>0001</cProd><qCom>5.0000</qCom><cEANTrib/><vUnTrib>4.000000</vUnTrib><qTrib>5.0000</qTrib><vProd>20.00</vProd><xProd>PRODUTO DE EXEMPLO</xProd><vUnCom>4.000000</vUnCom><indTot>1</indTot><uTrib>UN</uTrib><NCM>73181400</NCM><uCom>UN</uCom><CFOP>5405</CFOP></prod><imposto><vTotTrib>7.20</vTotTrib><ICMS><ICMSSN500><pST>0.00</pST><orig>0</orig><vBCSTRet>0.00</vBCSTRet><CSOSN>500</CSOSN><vICMSSTRet>0.00</vICMSSTRet></ICMSSN500></ICMS><COFINS><COFINSNT><CST>08</CST></COFINSNT></COFINS><PIS><PISNT><CST>08</CST></PISNT></PIS></imposto></det><total><ICMSTot><vCOFINS>0.00</vCOFINS><vBCST>0.00</vBCST><vICMSDeson>0.00</vICMSDeson><vProd>20.00</vProd><vSeg>0.00</vSeg><vFCP>0.00</vFCP><vFCPST>0.00</vFCPST><vNF>20.00</vNF><vPIS>0.00</vPIS><vIPIDevol>0.00</vIPIDevol><vBC>0.00</vBC><vST>0.00</vST><vICMS>0.00</vICMS><vII>0.00</vII><vFCPSTRet>0.00</vFCPSTRet><vDesc>0.00</vDesc><vOutro>0.00</vOutro><vIPI>0.00</vIPI><vFrete>0.00</vFrete></ICMSTot></total><pag><vTroco>0.00</vTroco><detPag><vPag>20.00</vPag><tPag>15</tPag></detPag></pag><Id>NFe31260911222333000181550010000012341123456788</Id><ide><tpNF>1</tpNF><mod>55</mod><indPres>1</indPres><tpImp>1</tpImp><nNF>1234</nNF><cMunFG>3106200</cMunFG><procEmi>0</procEmi><finNFe>1</finNFe><dhEmi>2026-09-05T10:53:42-03:00</dhEmi><tpAmb>1</tpAmb><indFinal>0</indFinal><idDest>1</idDest><tpEmis>1</tpEmis><cDV>8</cDV><cUF>31</cUF><serie>1</serie><natOp>Venda de mercadoria</natOp><cNF>12345678</cNF><verProc>000</verProc></ide><emit><xNome>EMPRESA EXEMPLO LTDA</xNome><CRT>1</CRT><CNPJ>11222333000181</CNPJ><enderEmit><UF>MG</UF><xPais>BRASIL</xPais><cPais>1058</cPais><xLgr>RUA EXEMPLO</xLgr><xMun>BELO HORIZONTE</xMun><nro>100</nro><cMun>3106200</cMun><xBairro>CENTRO</xBairro><CEP>30110000</CEP></enderEmit><IE>0012345670001</IE></emit><dest><xNome>CLIENTE EXEMPLO LTDA</xNome><CNPJ>44555666000199</CNPJ><enderDest><UF>MG</UF><xPais>BRASIL</xPais><cPais>1058</cPais><xLgr>AVENIDA EXEMPLO</xLgr><xMun>BELO HORIZONTE</xMun><nro>200</nro><cMun>3106200</cMun><xBairro>CENTRO</xBairro><CEP>30120000</CEP></enderDest><IE>0098765430001</IE><indIEDest>1</indIEDest></dest><transp><modFrete>9</modFrete></transp></infNFe></NFe><versao>4.00</versao></nfeProc>`;
+
+wireTab('ofx', { drop: '#drop-ofx', pick: '#pick-ofx', file: '#file-ofx', demo: '#demo-ofx', out: '#ofx-out',
+  about: '#ofx-about', run: processOFX, render: renderOFX, sample: SAMPLE_OFX, sampleName: 'exemplo-santander.ofx' });
+wireTab('nfe', { drop: '#drop-nfe', pick: '#pick-nfe', file: '#file-nfe', demo: '#demo-nfe', out: '#nfe-out',
+  about: '#nfe-about', run: processNFe, render: renderNFe, sample: SAMPLE_NFE, sampleName: 'exemplo-nfe.xml' });
+
+const TABS = [['#tab-ofx', '#p-ofx'], ['#tab-nfe', '#p-nfe']];
+TABS.forEach(([t, p]) => $(t).addEventListener('click', () => {
+  TABS.forEach(([t2, p2]) => { $(t2).setAttribute('aria-selected', String(t2 === t)); $(p2).hidden = t2 !== t; });
+  try { localStorage.setItem('oficina-tab', t); } catch (_) {}
+}));
+try { const s = localStorage.getItem('oficina-tab'); if (s && $(s)) $(s).click(); } catch (_) {}
+</script>
+
+</body>
+</html>
