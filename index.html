@@ -41,7 +41,7 @@ h1{font-size:25px;font-weight:600;letter-spacing:-.02em;margin:0;text-wrap:balan
 .brand small{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
 .lede{color:var(--muted);font-size:14px;max-width:62ch;margin:0}
 
-.tabs{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--line);border-radius:var(--radius);padding:4px;margin:22px 0 18px;width:fit-content;max-width:100%}
+.tabs{display:flex;gap:4px;overflow-x:auto;background:var(--surface2);border:1px solid var(--line);border-radius:var(--radius);padding:4px;margin:22px 0 18px;width:fit-content;max-width:100%}
 .tabs button{appearance:none;border:0;background:transparent;color:var(--muted);font-family:var(--sans);font-size:14px;font-weight:500;
   padding:8px 16px;border-radius:7px;cursor:pointer;white-space:nowrap}
 .tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.09)}
@@ -131,6 +131,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:v
   <div class="tabs" role="tablist">
     <button role="tab" id="tab-ofx" aria-selected="true" aria-controls="p-ofx">Extrato OFX</button>
     <button role="tab" id="tab-nfe" aria-selected="false" aria-controls="p-nfe">NF-e XML</button>
+    <button role="tab" id="tab-txt" aria-selected="false" aria-controls="p-txt">Transformar em XML</button>
   </div>
 
   <!-- ─────────────── OFX ─────────────── -->
@@ -197,6 +198,24 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:v
     </div>
 
     <div id="nfe-out" hidden></div>
+  </section>
+
+  <!-- ─────────────── Texto → XML ─────────────── -->
+  <section id="p-txt" role="tabpanel" aria-labelledby="tab-txt" hidden>
+    <div class="card" style="margin-top:0">
+      <h2>Cole o conteúdo do XML</h2>
+      <textarea id="txt-in" spellcheck="false" style="min-height:220px" placeholder="Cole aqui o texto do XML (Ctrl+V)…"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="txt-raw">Transformar em XML</button>
+        <button class="btn" id="txt-fix">Corrigir NF-e e gerar XML</button>
+        <button class="btn" id="txt-clear">Limpar</button>
+      </div>
+      <p class="note"><strong>Transformar em XML</strong> salva o texto como arquivo <code>.xml</code>, sem mudar nada.
+        <strong>Corrigir NF-e</strong> aplica as mesmas correções da aba NF-e XML. Copie o texto do arquivo aberto no
+        Bloco de Notas ou de onde o sistema mostrou o XML; copiar da visualização em árvore do navegador muda os espaços
+        e invalida a assinatura.</p>
+    </div>
+    <div id="txt-out" hidden></div>
   </section>
 
   <footer>Roda inteiramente no navegador. Arquivo nenhum é enviado para servidor — feche a aba e não sobra nada.</footer>
@@ -637,11 +656,15 @@ function renderNFe(r, box) {
       <div class="stats">${r.stats.map(statHTML).join('')}</div>
       ${h.chave ? `<p class="note" style="margin-top:12px">Chave <span class="filename">${esc(h.chave)}</span>${h.vNF != null ? ` · total R$ ${brl(h.vNF)}` : ''}</p>` : ''}
       <ul class="finds" style="margin-top:14px">${r.finds.map(findHTML).join('')}</ul></div>
-    ${r.xml ? `<div class="card"><h2>Arquivo corrigido</h2>
+    ${r.xml ? `<div class="card"><h2>${r.pastedAsIs ? 'Arquivo XML' : 'Arquivo corrigido'}</h2>
       <div class="row"><button class="btn primary" data-act="dl">Baixar .xml</button>
         <button class="btn" data-act="copy">Copiar conteúdo</button>
         <span class="filename">${esc(r.filename)}</span></div>
-      <p class="note">${r.sigState === 'valid'
+      <p class="note">${r.rawMode
+        ? 'Salvo exatamente como foi colado, sem nenhuma correção. Os apontamentos acima continuam valendo.'
+        : r.pastedAsIs
+        ? 'O conteúdo colado já estava correto. Foi só transformado em arquivo <code>.xml</code>, sem nenhuma alteração.'
+        : r.sigState === 'valid'
         ? 'Só a declaração <code>&lt;?xml?&gt;</code> foi adicionada. Estrutura e assinatura intactas.'
         : 'Estrutura reordenada conforme o <code>procNFe_v4.00.xsd</code>. A assinatura digital não vai junto — se o seu validador confere assinatura, esse arquivo não passa e você precisa do XML original do emitente.'}</p>
       <textarea readonly spellcheck="false" style="margin-top:12px">${esc(r.xml.slice(0, 4000))}${r.xml.length > 4000 ? '\n…' : ''}</textarea></div>`
@@ -695,7 +718,54 @@ wireTab('ofx', { drop: '#drop-ofx', pick: '#pick-ofx', file: '#file-ofx', demo: 
 wireTab('nfe', { drop: '#drop-nfe', pick: '#pick-nfe', file: '#file-nfe', demo: '#demo-nfe', out: '#nfe-out',
   about: '#nfe-about', run: processNFe, render: renderNFe, sample: SAMPLE_NFE, sampleName: 'exemplo-nfe.xml' });
 
-const TABS = [['#tab-ofx', '#p-ofx'], ['#tab-nfe', '#p-nfe']];
+/* ── Texto colado → arquivo .xml (aba própria) ── */
+(() => {
+  const ta = $('#txt-in'), out = $('#txt-out');
+  $('#txt-clear').addEventListener('click', () => { ta.value = ''; out.hidden = true; ta.focus(); });
+  const clean = t => {
+    t = t.replace(/^\uFEFF/, '');
+    const i = t.search(/<\?xml|<[A-Za-z_][\w.:-]*[\s>\/]/);
+    if (i > 0) t = t.slice(i);
+    const j = t.lastIndexOf('>');
+    if (j >= 0) t = t.slice(0, j + 1);
+    return t.trim();
+  };
+  const run = async raw => {
+    const txt = clean(ta.value);
+    if (!txt || !txt.includes('<')) { toast('Cole o conteúdo do XML primeiro.'); return; }
+    const ch = (txt.match(/Id="[A-Za-z]*(\d{44})"/) || txt.match(/<ch[A-Za-z]+>(\d{44})<\//) || [])[1];
+    const name = (ch || 'documento') + '.xml';
+    out.hidden = false;
+    out.innerHTML = '<div class="card"><p class="note" style="margin:0">Analisando o conteúdo colado…</p></div>';
+    try {
+      const doc = new DOMParser().parseFromString(txt.replace(/^\s*<\?xml[^>]*\?>/, ''), 'application/xml');
+      const bad = doc.querySelector('parsererror');
+      if (bad) {
+        out.innerHTML = `<div class="card"><ul class="finds">${findHTML({ k: 'err', t: 'O texto colado não é um XML válido',
+          d: 'Provavelmente faltou um pedaço na cópia (início ou fim do arquivo) ou entrou texto que não faz parte do XML. Copie de novo o conteúdo inteiro.' })}</ul></div>`;
+        return;
+      }
+      const root = doc.documentElement.localName;
+      let r;
+      if (!['nfeProc', 'NFe'].includes(root)) {
+        if (!raw) { toast('Esse XML não é uma NF-e — use Transformar em XML.'); }
+        r = { xml: txt, filename: name, pastedAsIs: true, rawMode: true, head: {}, stats: [],
+              finds: [{ k: 'info', t: `Documento <code>&lt;${esc(root)}&gt;</code>, não é NF-e`, d: 'Salvo como .xml do jeito que foi colado, sem análise fiscal.' }] };
+      } else {
+        r = await processNFe(txt, name);
+        if (!r.error && (raw || !r.xml)) { r.xml = txt; r.filename = name; r.pastedAsIs = true; r.rawMode = raw; }
+      }
+      renderNFe(r, out);
+    } catch (e) {
+      out.innerHTML = `<div class="card"><ul class="finds">${findHTML({ k: 'err', t: 'Falha ao processar', d: esc(e.message || String(e)) })}</ul></div>`;
+    }
+    out.scrollIntoView({ block: 'start' });
+  };
+  $('#txt-raw').addEventListener('click', () => run(true));
+  $('#txt-fix').addEventListener('click', () => run(false));
+})();
+
+const TABS = [['#tab-ofx', '#p-ofx'], ['#tab-nfe', '#p-nfe'], ['#tab-txt', '#p-txt']];
 TABS.forEach(([t, p]) => $(t).addEventListener('click', () => {
   TABS.forEach(([t2, p2]) => { $(t2).setAttribute('aria-selected', String(t2 === t)); $(p2).hidden = t2 !== t; });
   try { localStorage.setItem('oficina-tab', t); } catch (_) {}
